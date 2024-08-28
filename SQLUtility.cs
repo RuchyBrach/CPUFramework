@@ -41,6 +41,8 @@ namespace CPUFramework
             {
                 c.AllowDBNull = true;
             }
+
+            
         }
 
         public static void DebugPrintDataTable(DataTable dt)
