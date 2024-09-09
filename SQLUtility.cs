@@ -11,7 +11,7 @@ namespace CPUFramework
 {
     public class SQLUtility
     {
-        public static string ConnectionString = "";
+        public static string ConnectionString = ""; 
 
         public static DataTable GetDataTable(string sqlstatement)
         {
