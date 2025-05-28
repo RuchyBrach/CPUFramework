@@ -30,7 +30,17 @@ namespace CPUFramework
             return DoExecuteSQL(cmd, true);
         }
 
-        public static void SaveDataRow(DataRow row, string sprocname)
+        public static void SaveDataTable(DataTable dt, string sprocname)
+        {
+            var rows = dt.Select("", "", DataViewRowState.Added | DataViewRowState.ModifiedCurrent);
+            foreach(DataRow r in rows)
+            {
+                SaveDataRow(r, sprocname, false);
+            }
+            dt.AcceptChanges();
+        }
+
+        public static void SaveDataRow(DataRow row, string sprocname, bool acceptchanges = true)
         {
             SqlCommand cmd = GetSQLCommand(sprocname);
             foreach(DataColumn col in row.Table.Columns)
@@ -42,14 +52,19 @@ namespace CPUFramework
                 }
             }
             DoExecuteSQL(cmd, false);
-
+            row.Table.AcceptChanges();
             foreach(SqlParameter p in cmd.Parameters)
             {
                 string colname = p.ParameterName.Substring(1);
                 if (row.Table.Columns.Contains(colname))
                 {
                     row[colname] = p.Value;
+                    row.Table.AcceptChanges();
                 }
+            }
+            if (acceptchanges == true)
+            {
+                row.Table.AcceptChanges();
             }
         }
 
@@ -80,7 +95,7 @@ namespace CPUFramework
                     throw new Exception(cmd.CommandText + ": " + ex.Message, ex);
                 }
             }
-            SetAllColumnsAllowNull(dt);
+            SetAllColumnsProperties(dt);
             return dt;
         }
 
@@ -148,10 +163,13 @@ namespace CPUFramework
 
         public static string ParseConstraintMsg(string msg)
         {
+            //PartyId', table 'RecordKeeperDB.dbo.President'; column does not allow nulls. INSERT fails.
+            
             string origmsg = msg;
             string prefix = "ck_";
             string msgend = "";
-            if(msg.Contains(prefix) == false)
+            string notnullprefix = "Cannot insert the value NULL into column '";
+            if (msg.Contains(prefix) == false)
             {
                 if (msg.Contains("u_"))
                 {
@@ -161,6 +179,11 @@ namespace CPUFramework
                 else if (msg.Contains("f_"))
                 {
                     prefix = "f_";
+                }
+                else if (msg.Contains(notnullprefix))
+                {
+                    prefix = notnullprefix;
+                    msgend = " cannot be blank.";
                 }
             }
             if (msg.Contains(prefix))
@@ -206,13 +229,53 @@ namespace CPUFramework
             return n;
         }
 
-        private static void SetAllColumnsAllowNull(DataTable dt)
+        private static void SetAllColumnsProperties(DataTable dt)
         {
             foreach (DataColumn c in dt.Columns)
             {
                 c.AllowDBNull = true;
+                c.AutoIncrement = false;
             }
 
+
+        }
+
+        public static int GetValueFromFirstRowAsInt(DataTable dt, string columnname)
+        {
+            int value = 0;
+            if(dt.Rows.Count > 0)
+            {
+                DataRow r = dt.Rows[0];
+                if (r[columnname] != null && r[columnname] is int)
+                {
+                    value = (int)r[columnname];
+                }
+            }
+            return value;
+        }
+
+        public static string GetValueFromFirstRowAsString(DataTable dt, string columnname)
+        {
+            string value = "";
+            if (dt.Rows.Count > 0)
+            {
+                DataRow r = dt.Rows[0];
+                if (r[columnname] != null && r[columnname] is string)
+                {
+                    value = (string)r[columnname];
+                }
+            }
+            return value;
+        }
+
+        public static bool TableHasChanges(DataTable dt)
+        {
+            bool b = false;
+            if(dt.GetChanges() != null)
+            {
+                b = true;
+            }
+            return b;
 
         }
 
