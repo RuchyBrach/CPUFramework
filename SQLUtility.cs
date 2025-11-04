@@ -68,7 +68,23 @@ namespace CPUFramework
             }
         }
 
-            private static DataTable DoExecuteSQL(SqlCommand cmd, bool loadtable)
+        public static void SaveChildTable(DataTable dt, int parentid, string parentcolumnname, string sprocname)
+        {
+            foreach (DataRow r in dt.Select("", "", DataViewRowState.Added))
+            {
+                r[parentcolumnname] = parentid;
+            }
+            SaveDataTable(dt, sprocname);
+        }
+
+        public static void DeleteChildTable(int childtableid, string sprocname, string childtableparamname)
+        {
+            SqlCommand cmd = GetSQLCommand(sprocname);
+            cmd.Parameters[childtableparamname].Value = childtableid;
+            SQLUtility.ExecuteSQL(cmd);
+        }
+
+        private static DataTable DoExecuteSQL(SqlCommand cmd, bool loadtable)
         {
             Debug.Print("-----" +Environment.NewLine + cmd.CommandText);
             DataTable dt = new();
