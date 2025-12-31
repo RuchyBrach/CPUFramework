@@ -205,12 +205,13 @@ namespace CPUFramework
             string prefix = "ck_";
             string msgend = "";
             string notnullprefix = "Cannot insert the value NULL into column '";
+            string msgstart = GetColumnFromConstraintName(msg);
             if (msg.Contains(prefix) == false)
             {
                 if (msg.Contains("u_"))
                 {
                     prefix = "u_";
-                    msg = " must be unique.";
+                    msg = msgstart + " must be unique.";
                 }
                 else if (msg.Contains("f_"))
                 {
@@ -249,6 +250,16 @@ namespace CPUFramework
                 }
             }
             return msg;
+        }
+
+        private static string GetColumnFromConstraintName(string constraintmsg)
+        {
+            int start = constraintmsg.IndexOf('\'');
+            int end = constraintmsg.IndexOf('\'', start + 1);
+
+            string constraintname = constraintmsg.Substring(start + 1, end - start - 1);
+
+            return constraintname.Split('_').Last();
         }
 
         public static int GetFirstColumnFirstRowValue(string sql)
