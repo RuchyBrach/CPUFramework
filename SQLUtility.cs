@@ -124,7 +124,7 @@ namespace CPUFramework
                 catch(SqlException ex)
                 {
                     string msg = ParseConstraintMsg(ex.Message);
-                    throw new Exception(msg);
+                    throw new Exception(msg); 
                 }
                 catch(InvalidCastException ex)
                 {
