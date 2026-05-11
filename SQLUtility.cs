@@ -8,7 +8,7 @@ namespace CPUFramework
 {
     public class SQLUtility
     {
-        public static string ConnectionString = "";
+        private static string ConnectionString = "";
 
         public static void SetConnectionString(string connstring, bool tryopen, string userid = "", string password = "")
         {
@@ -21,9 +21,9 @@ namespace CPUFramework
                 b.Password = password;
                 ConnectionString = b.ConnectionString;
             }
-            if(tryopen == true)
+            if (tryopen)
             {
-                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                using(SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
                 }
