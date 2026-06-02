@@ -1,13 +1,12 @@
 ﻿using System.Data.SqlClient;
 using System.Data;
 using System.Reflection;
-using System.Text.Json.Serialization.Metadata;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace CPUFramework
 {
-    public class bizObject : INotifyPropertyChanged
+    public class bizObject<T> : INotifyPropertyChanged where T: bizObject<T>, new()
     {
         string _typname = ""; string _tablename = ""; string _getsproc = ""; string _updatesproc = ""; string _deletesproc = "";
         string _primarykeyname = ""; string _primarykeyparamname = "";
@@ -44,6 +43,25 @@ namespace CPUFramework
             return dt;
         }
 
+        public List<T> GetList(bool includeblank = false) { 
+            SqlCommand cmd = SQLUtility.GetSQLCommand(_getsproc);
+            SQLUtility.SetParamValue(cmd, "@All", 1);
+            SQLUtility.SetParamValue(cmd, "@IncludeBlank", includeblank);
+            DataTable dt = SQLUtility.GetDataTable(cmd);
+            return GetListFromDataTable(dt);
+        }
+
+        protected List<T> GetListFromDataTable(DataTable dt)
+        {
+            List<T> lst = new();
+            foreach (DataRow r in dt.Rows)
+            {
+                T obj = new T();
+                obj.LoadProps(r);
+                lst.Add(obj);
+            }
+            return lst;
+        }
         private void LoadProps(DataRow dr)
         {
             foreach (DataColumn col in dr.Table.Columns)
@@ -142,6 +160,8 @@ namespace CPUFramework
 
             }
         }
+
+        protected string GetSprocName { get => _getsproc; }
 
         protected void InvokePropertyChanged([CallerMemberName] string propertyname = "")
         {
